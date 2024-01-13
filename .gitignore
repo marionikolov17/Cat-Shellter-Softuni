@@ -1,2 +1,5 @@
 #Ignore external resources folder
 resources
+
+#Ignore node modules folder
+node_modules
