@@ -125,6 +125,24 @@ const server = http.createServer(async (req, res) => {
     res.setHeader("Content-Type", "text/html");
     res.write(modifiedEditCatPage);
     res.end();
+  } else if (req.url.startsWith("/search")) {
+    const searchName = req.url.split("?")[1].split("=")[1];
+
+    let filteredCats = cats.filter((el) =>
+      el.name.toLowerCase().includes(searchName.toLowerCase())
+    );
+
+    let homePage = await fs.readFile(views.home, fileEncodings);
+
+    const catsTemplate = await generateCatsTemplate(filteredCats);
+    homePage = homePage.replace("{cats}", catsTemplate.join(""));
+
+    res.writeHead(200, {
+      "Content-Type": "text/html",
+    });
+
+    res.write(homePage);
+    res.end();
   } else if (req.url === "/cats/add-cat" && req.method === "POST") {
     // Functionalitty requests
     let body = "";
@@ -175,6 +193,40 @@ const server = http.createServer(async (req, res) => {
       location: "/",
     });
     res.end();
+  } else if (req.url.startsWith("/cats/add-breed") && req.method === "POST") {
+    let body = "";
+
+    req.on("data", (data) => {
+      body += data;
+    });
+
+    req.on("close", () => {
+      let breedData = qs.parse(body);
+      let breed = breedData.breed;
+
+      breeds.push(breed);
+
+      res.writeHead(302, {
+        location: "/",
+      });
+      res.end();
+    })
+  } else if (req.url.startsWith("/cats/search")) {
+    let body = "";
+
+    req.on("data", (data) => {
+      body += data;
+    });
+
+    req.on("close", () => {
+      let searchData = qs.parse(body);
+      let searchInput = searchData["search"];
+
+      res.writeHead(302, {
+        location: `/search?q=${searchInput}`,
+      });
+      res.end();
+    });
   } else if (req.url === "/content/styles/site.css") {
     // CSS
     const siteCss = await fs.readFile(styles.site, fileEncodings);
